@@ -35,13 +35,10 @@ Develop a solution to enable location-based search within the leadsAI collection
 
 - The provided resources (MongoDB forum discussion and documentation) can be referenced for further context on MongoDB's vector search limitations.
 
-Database to perform the search: https://drive.google.com/file/d/1wgE8-DWR0Z6qC633H6_pqwqW3D6rU6wU/view?usp=sharing
-
-
 ## **Solution:**
 
 Here is a video explaination of my approach solving this problem.
 
 [Video Link](https://www.youtube.com/)
 
-Technologies - LangChain, Pinecone.
+GenAI Tech - LangChain, Pinecone.
