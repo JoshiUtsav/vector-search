@@ -3,25 +3,35 @@ import { OPENAI_SECRET_KEY } from '../config/index'; // Importing OpenAI secret 
 
 // Creating an instance of OpenAI with the provided secret key
 const openai = new OpenAI({
-  apiKey: OPENAI_SECRET_KEY
+  apiKey: OPENAI_SECRET_KEY,
 });
 
 /**
- * Creates an embedding for the given text using OpenAI's text-embedding model.
+ * Generates an embedding vector for a specified text using OpenAI's model.
+ * @param text The text to generate the embedding for.
+ * @returns A Promise containing the embedding vector.
  */
-async function createEmbedding() {
-  try {
-    // Generating embedding for the input text
-    const embedding = await openai.embeddings.create({
-      model: 'text-embedding-ada-002',
-      input: 'Your text string goes here',
-      encoding_format: 'float'
-    });
+async function generateTextEmbedding(text: string): Promise<number[]> {
+  if (!text) {
+    throw new Error('No text provided for embedding generation.');
+  }
 
-    console.log('Embedding created:', embedding);
-  } catch (error) {
-    console.error('Error creating embedding:', error);
+  try {
+    const response = await openai.embeddings.create({
+      model: 'text-embedding-ada-002',
+      input: text,
+      encoding_format: 'float',
+    });
+    // Ensure 'embeddings' property exists in the response and return it
+    if (Array.isArray(response.data) && response.data.length > 0) {
+      return response.data[0].embedding;
+      
+    } else {
+      throw new Error('Embeddings not found in the response');
+    }
+  } catch (error: any) { // Define the type of 'error' explicitly
+    throw new Error(`Failed to generate embedding: ${(error as Error).message}`);
   }
 }
 
-export default createEmbedding;
+export default generateTextEmbedding;
