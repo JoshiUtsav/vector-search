@@ -1,5 +1,5 @@
-import csv from 'csvtojson'; // Importing csvtojson module for CSV to JSON conversion
-import fs from 'fs'; // Importing file system module for file operations
+import csv from 'csvtojson' // Importing csvtojson module for CSV to JSON conversion
+import fs from 'fs' // Importing file system module for file operations
 
 /**
  * Converts CSV content to JSON and writes it to a specified file.
@@ -8,9 +8,12 @@ import fs from 'fs'; // Importing file system module for file operations
  * @returns A promise that resolves when conversion and writing are complete.
  */
 async function convertCsvToJson(csvFilePath: string, jsonFilePath: string): Promise<void> {
-  const jsonArray = await csv().fromFile(csvFilePath);
-  const jsonContent = JSON.stringify(jsonArray, null, 2);
-  fs.writeFileSync(jsonFilePath, jsonContent, 'utf8');  
+  const jsonArray = await csv().fromFile(csvFilePath)
+  jsonArray.forEach((obj) => {
+    obj.embedding = []
+  })
+  const jsonContent = JSON.stringify(jsonArray, null, 2)
+  fs.writeFileSync(jsonFilePath, jsonContent, 'utf8')
 }
 
-export default convertCsvToJson;
+export default convertCsvToJson
