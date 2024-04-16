@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express'
 import http from 'http'
-import { PORT, InputfilePath, OutputfilePath } from './config'
+import { PORT, CSV_FILE_PATH, JSON_FILE_PATH, RAW_TEXT, JSONS } from './config'
 import multer from 'multer'
 import path from 'path'
-import { convertCsvToJson, generateTextEmbedding } from './lib/Index'
+import { initializeConversionAndEmbedding } from './common/utils'
 
 const app = express()
 const server = http.createServer(app)
@@ -20,21 +20,8 @@ app.get('/', (req: Request, res: Response) => {
   res.sendStatus(200)
 })
 
-// Refactored to async/await for readability
-async function initialize() {
-  try {
-    await convertCsvToJson(InputfilePath, OutputfilePath)
-    console.log('CSV to JSON conversion complete')
-
-    const inputText = 'Hello My Name is Utsav'
-    await generateTextEmbedding(inputText)
-    console.log('User Query Text Embeddings created successfully')
-  } catch (error) {
-    console.error('Initialization error:', error)
-  }
-}
+initializeConversionAndEmbedding(CSV_FILE_PATH, JSON_FILE_PATH, RAW_TEXT, JSONS )
 
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`)
-  initialize()
 })

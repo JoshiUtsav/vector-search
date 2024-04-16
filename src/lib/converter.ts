@@ -9,8 +9,9 @@ import fs from 'fs' // Importing file system module for file operations
  */
 async function convertCsvToJson(csvFilePath: string, jsonFilePath: string): Promise<void> {
   const jsonArray = await csv().fromFile(csvFilePath)
+  const varN = "Hello"
   jsonArray.forEach((obj) => {
-    obj.embedding = []
+    obj.embedding = [varN]
   })
   const jsonContent = JSON.stringify(jsonArray, null, 2)
   fs.writeFileSync(jsonFilePath, jsonContent, 'utf8')
