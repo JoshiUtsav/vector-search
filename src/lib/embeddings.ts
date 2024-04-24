@@ -51,7 +51,7 @@ export async function generateJsonEmbedding(jsonObject: string): Promise<number[
       model: 'text-embedding-ada-002',
       input: jsonObject,
       encoding_format: 'float',
-    });
+    });    
 
     const embedding = data?.[0]?.embedding;
     if (!Array.isArray(embedding) || embedding.length === 0) {
