@@ -9,13 +9,3 @@ export const PINECONE_API_KEY = process.env.PINECONE_API_KEY || 'add you own api
 export const CSV_FILE_PATH = 'public/data.csv'
 export const JSON_FILE_PATH = 'public/data.json'
 export const RAW_TEXT = 'My name is utsav joshi'
-export const JSONS = [
-  {
-    name: 'Utsav Joshi',
-    ghar: 'Tilak Nagar',
-  },
-  {
-    name: 'John Joshi',
-    ghar: 'Abroad',
-  },
-]

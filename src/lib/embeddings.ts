@@ -52,7 +52,7 @@ export async function generateJsonEmbedding(jsonObject: string): Promise<number[
       input: jsonObject,
       encoding_format: 'float',
     });    
-
+    
     const embedding = data?.[0]?.embedding;
     if (!Array.isArray(embedding) || embedding.length === 0) {
       throw new Error('Embedding data not found in the response.');
