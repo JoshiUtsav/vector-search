@@ -3,7 +3,7 @@ import http from 'http'
 import { PORT, CSV_FILE_PATH, JSON_FILE_PATH, RAW_TEXT } from './config'
 import multer from 'multer'
 import path from 'path'
-import { initializeConversionAndEmbedding } from './common/utils'
+import { initializeConversionAndEmbeddingGeneration } from './lib/Initialize'
 
 const app = express()
 const server = http.createServer(app)
@@ -20,7 +20,7 @@ app.get('/', (req: Request, res: Response) => {
   res.sendStatus(200)
 })
 
-initializeConversionAndEmbedding(CSV_FILE_PATH, JSON_FILE_PATH, RAW_TEXT )
+initializeConversionAndEmbeddingGeneration(CSV_FILE_PATH, JSON_FILE_PATH, RAW_TEXT )
 
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`)
