@@ -1,5 +1,5 @@
 import { convertCsvToJson, generateTextEmbedding, generateJsonEmbedding } from '../lib/Index'
-import { extractDetailsToEmbed, newEmbed } from '../common/utils'
+import { extractDetailsToEmbed, generateEmbedding } from '../common/utils'
 import {
   CSV_TO_JSON_SUCCESS_MESSAGE,
   TEXT_EMBEDDING_SUCCESS_MESSAGE,
@@ -44,7 +44,7 @@ export async function initializeConversionAndEmbeddingGeneration(
     const extractedDetailsToEmbed = await extractDetailsToEmbed(jsonFilePath)
     console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE)    
 
-    const result = await newEmbed(extractedDetailsToEmbed)
+    const result = await generateEmbedding(extractedDetailsToEmbed)        
 
   } catch (error) {
     // Handle errors during initialization

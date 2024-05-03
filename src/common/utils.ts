@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { promises as fsp } from 'fs'
-import { convertCsvToJson, generateTextEmbedding, generateJsonEmbedding } from '../lib/Index'
+import { convertCsvToJson, generateJsonEmbedding } from '../lib/Index'
 
 interface DataObject {
   [key: string]: any
@@ -34,21 +34,6 @@ function watchFileChange(sourcePath: string, destinationPath: string): void {
   // Log a message when watching starts
   console.log(`Watching for changes in ${sourcePath}...`)
 }
-
-
-/**
- * Initializes the conversion of a CSV file to JSON and creates text and JSON embeddings.
- *
- * This function takes the paths to a CSV file and a JSON file, as well as text and a JSON object
- * to be converted into embeddings. It performs the conversion of the CSV to JSON, generates an
- * embedding from the given text, and creates an embedding from the JSON object. It logs the progress
- * and throws an error if any step fails.
- *
- * @param csvFilePath Path to the CSV file to be converted.
- * @param jsonFilePath Path where the converted JSON file will be saved.
- * @param textToEmbed Text to be converted into an embedding.
- * @throws Will throw an error if the input parameters are invalid or if any operation fails.
- */
 
 /**
  * Extracts specific details from a JSON file and returns them as an array of objects.
@@ -101,16 +86,17 @@ export async function extractDetailsToEmbed(jsonFilePath: string) {
   }
 }
 
-export async function newEmbed(data: DataObject) {
+export async function generateEmbedding(data: DataObject) {
   if (!data) {
     throw new Error('No data provided for embedding generation.')
   }
-  let result;
+  let result
+
   for (const key in data) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
       const values = data[key]
       const convertToString = JSON.stringify(values)
-      const convertedJsonData = convertToString.replace(/[{,"}]/g, '')
+      const convertedJsonData = convertToString.replace(/[{,"}]/g, '')      
       result = await generateJsonEmbedding(convertedJsonData)
     }
   }
