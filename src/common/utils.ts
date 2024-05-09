@@ -1,9 +1,15 @@
 import fs from 'fs'
 import { promises as fsp } from 'fs'
 import { convertCsvToJson, generateJsonEmbedding } from '../lib/Index'
+import { memoizeExtractDetails } from './Cache'
 
 interface DataObject {
   [key: string]: any
+}
+
+interface EmbeddingResult {
+  key: string 
+  embedding: any 
 }
 
 /**
@@ -48,7 +54,7 @@ function watchFileChange(sourcePath: string, destinationPath: string): void {
  * @throws Will throw an error if the jsonFilePath is null or undefined, if the JSON data is not an array,
  *         or if there's an error in reading or parsing the JSON file.
  */
-export async function extractDetailsToEmbed(jsonFilePath: string) {
+export async function extractDetailsToEmbed(jsonFilePath: string): Promise<any[]> {
   // Ensure the file path is provided
   if (!jsonFilePath) {
     throw new Error('JSON file path must not be null or undefined.')
@@ -79,25 +85,29 @@ export async function extractDetailsToEmbed(jsonFilePath: string) {
         // Return null for any item that doesn't match the criteria
         return null
       })
-      .filter((item) => item !== null) // Filter out the null
+      .filter((item) => item !== null) // Filter out the
+
+    // Memoize the result
   } catch (error) {
     // Handle any errors during file reading or JSON parsing
     throw new Error(`Error processing JSON file: ${error instanceof Error ? error.message : error}`)
   }
 }
 
-export async function generateEmbedding(data: DataObject) {
+export async function generateEmbedding(data: DataObject): Promise<EmbeddingResult[]> {
   if (!data) {
     throw new Error('No data provided for embedding generation.')
   }
-  let result
+
+  const embeddings: EmbeddingResult[] = []
 
   for (const key in data) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
-      const values = data[key]
-      const convertToString = JSON.stringify(values)
-      const convertedJsonData = convertToString.replace(/[{,"}]/g, '')      
-      result = await generateJsonEmbedding(convertedJsonData)
+      const jsonData = JSON.stringify(data[key]).replace(/[{,"}]/g, '')
+      const embedding = await generateJsonEmbedding(jsonData)
+      embeddings.push({ key, embedding })
     }
   }
+
+  return embeddings
 }

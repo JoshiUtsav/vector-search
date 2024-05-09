@@ -44,7 +44,11 @@ export async function initializeConversionAndEmbeddingGeneration(
     const extractedDetailsToEmbed = await extractDetailsToEmbed(jsonFilePath)
     console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE)    
 
-    const result = await generateEmbedding(extractedDetailsToEmbed)        
+    const result = await generateEmbedding(extractedDetailsToEmbed)
+    console.log(JSON_EMBEDDING_SUCCESS_MESSAGE);
+    console.log(result);
+    
+    
 
   } catch (error) {
     // Handle errors during initialization
