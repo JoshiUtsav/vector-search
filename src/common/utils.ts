@@ -106,6 +106,8 @@ export async function generateEmbedding(data: DataObject): Promise<EmbeddingResu
       const jsonData = JSON.stringify(data[key]).replace(/[{,"}]/g, '')
       const embedding = await generateJsonEmbedding(jsonData)
       embeddings.push({ key, embedding })
+      console.log(key);
+      
     }
   }
 
