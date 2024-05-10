@@ -1,4 +1,4 @@
-import { convertCsvToJson, generateTextEmbedding, generateJsonEmbedding } from '../lib/Index'
+import { convertCsvToJson, generateTextEmbedding, generateJsonEmbedding, sendingEmbeddingIntoJson } from '../lib/Index'
 import { extractDetailsToEmbed, generateEmbedding } from '../common/utils'
 import {
   CSV_TO_JSON_SUCCESS_MESSAGE,
@@ -24,7 +24,7 @@ import {
 export async function initializeConversionAndEmbeddingGeneration(
   csvFilePath: string,
   jsonFilePath: string,
-  textToEmbed: string,
+  textToEmbed?: string,
 ): Promise<void> {
   // Validate input parameters
   if (!csvFilePath || !jsonFilePath || !textToEmbed) {
@@ -40,12 +40,15 @@ export async function initializeConversionAndEmbeddingGeneration(
     const reply = await generateTextEmbedding(textToEmbed)
     console.log(TEXT_EMBEDDING_SUCCESS_MESSAGE)
 
-    // Generate JSON object embedding
+    // Extracted JSON object embedding
     const extractedDetailsToEmbed = await extractDetailsToEmbed(jsonFilePath)
-    console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE)    
+    console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE)
 
-    const result = await generateEmbedding(extractedDetailsToEmbed)
-    console.log(JSON_EMBEDDING_SUCCESS_MESSAGE);
+    // Generated JSON embeddings
+    const jsonEmbedding = await generateEmbedding(extractedDetailsToEmbed)
+    console.log(JSON_EMBEDDING_SUCCESS_MESSAGE)
+
+    const result = await sendingEmbeddingIntoJson(jsonEmbedding)
     console.log(result);
     
     

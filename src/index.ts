@@ -20,7 +20,7 @@ app.get('/', (req: Request, res: Response) => {
   res.sendStatus(200)
 })
 
-initializeConversionAndEmbeddingGeneration(CSV_FILE_PATH, JSON_FILE_PATH, RAW_TEXT )
+initializeConversionAndEmbeddingGeneration(CSV_FILE_PATH, JSON_FILE_PATH, RAW_TEXT)
 
 server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`)
