@@ -1,5 +1,2 @@
-1. Write code to convert csv file into json. [DONE]
-2. After conversion is done write convert json into vector embeddings using openAI. [DONE]
-3. Store Vector embeddings into pine cone database. [PENDING]
-4. Use Langchaiin to understand and a create a message of the output. [PENDING]
-5. Show the output to the client. [PENDING]
+1. First I had to create a KeepEye File so that i can check on the data if the data is added or not.
+2. This is came first but we have to write some cache file so that code will be optimized.

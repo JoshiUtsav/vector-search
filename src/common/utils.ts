@@ -1,45 +1,6 @@
-import fs from 'fs'
 import { promises as fsp } from 'fs'
-import { convertCsvToJson, generateJsonEmbedding } from '../lib/Index'
-import { memoizeExtractDetails } from './Cache'
-
-interface DataObject {
-  [key: string]: any
-}
-
-interface EmbeddingResult {
-  key: string 
-  embedding: any 
-}
-
-/**
- * Sets up a watcher on a CSV file and converts it to JSON format upon any changes.
- *
- * This function watches for any changes to the specified CSV file. When a change is detected,
- * it triggers the conversion from CSV to JSON and saves the result to the given destination path.
- *
- * @param sourcePath The path to the source CSV file to watch.
- * @param destinationPath The path where the converted JSON file should be saved.
- */
-function watchFileChange(sourcePath: string, destinationPath: string): void {
-  const watcher = fs.watch(sourcePath, async (eventType) => {
-    if (eventType === 'change') {
-      try {
-        await convertCsvToJson(sourcePath, destinationPath)
-      } catch (error) {
-        console.error('Failed:', error)
-      }
-    }
-  })
-
-  // Handle error event to prevent unhandled exceptions
-  watcher.on('error', (error) => {
-    console.error('Watcher error:', error)
-  })
-
-  // Log a message when watching starts
-  console.log(`Watching for changes in ${sourcePath}...`)
-}
+import { generateJsonEmbedding } from '../lib/Index'
+import { EmbeddingResult, DataObject } from "../types/index.d"
 
 /**
  * Extracts specific details from a JSON file and returns them as an array of objects.
@@ -54,7 +15,7 @@ function watchFileChange(sourcePath: string, destinationPath: string): void {
  * @throws Will throw an error if the jsonFilePath is null or undefined, if the JSON data is not an array,
  *         or if there's an error in reading or parsing the JSON file.
  */
-export async function extractDetailsToEmbed(jsonFilePath: string): Promise<any[]> {
+export async function extractDetailsToEmbed(jsonFilePath: string): Promise<DataObject[]> {
   // Ensure the file path is provided
   if (!jsonFilePath) {
     throw new Error('JSON file path must not be null or undefined.')
@@ -71,45 +32,56 @@ export async function extractDetailsToEmbed(jsonFilePath: string): Promise<any[]
     }
 
     // Map through the array and extract the required details
-    return jsonData
-      .map((item) => {
-        // Process only if the item is an object and not an array
-        if (item && typeof item === 'object' && !Array.isArray(item)) {
-          return {
-            Title: item['Title'], // Extract the Title
-            Industry: item['Industry'], // Extract the Industry
-            State: item['State'], // Extract the State
-            City: item['City'], // Extract the City
-          }
-        }
-        // Return null for any item that doesn't match the criteria
-        return null
-      })
-      .filter((item) => item !== null) // Filter out the
+    const extractedDetails: DataObject[] = jsonData
+      .filter((item) => typeof item === 'object' && !Array.isArray(item))
+      .map((item) => ({
+        Title: item['Title'] || '',
+        Industry: item['Industry'] || '',
+        State: item['State'] || '',
+        City: item['City'] || '',
+      }))      
 
-    // Memoize the result
+    return extractedDetails
   } catch (error) {
     // Handle any errors during file reading or JSON parsing
     throw new Error(`Error processing JSON file: ${error instanceof Error ? error.message : error}`)
   }
 }
 
-export async function generateEmbedding(data: DataObject): Promise<EmbeddingResult[]> {
+/**
+ * Generates embeddings for each key-value pair in the provided data object.
+ *
+ * @param data The data object for which embeddings are to be generated.
+ * @returns An array of objects containing the key and its corresponding embedding.
+ * @throws Will throw an error if the data object is null or undefined.
+ */
+export async function generateEmbedding(data: DataObject[]): Promise<EmbeddingResult[]> {
+  // Check if data is null or undefined
   if (!data) {
     throw new Error('No data provided for embedding generation.')
   }
 
   const embeddings: EmbeddingResult[] = []
 
+  // Loop through the keys of the data object
   for (const key in data) {
+    // Check if the key is a property of data, not inherited from the prototype chain
     if (Object.prototype.hasOwnProperty.call(data, key)) {
-      const jsonData = JSON.stringify(data[key]).replace(/[{,"}]/g, '')
-      const embedding = await generateJsonEmbedding(jsonData)
-      embeddings.push({ key, embedding })
-      console.log(key);
-      
+      try {
+        // Convert the value associated with the key to a JSON string
+        const jsonData = JSON.stringify((data as any)[key]).replace(/[{,":}"}]/g, ' ');
+        console.log("Cleaned JSON Data: ", jsonData);
+        
+        // Generate the embedding for the jsonData
+        const embedding = await generateJsonEmbedding(jsonData)
+        embeddings.push({ id: key, values:embedding })
+      } catch (error) {
+        // Handle any errors during JSON stringification or embedding generation
+        console.error(
+          `Error generating embedding for key "${key}": ${error instanceof Error ? error.message : error}`,
+        )
+      }
     }
   }
-
   return embeddings
 }

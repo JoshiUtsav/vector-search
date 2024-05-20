@@ -1,4 +1,9 @@
-import { convertCsvToJson, generateTextEmbedding, generateJsonEmbedding, sendingEmbeddingIntoJson } from '../lib/Index'
+import {
+  convertCsvToJson,
+  generateTextEmbedding,
+  generateJsonEmbedding,
+  writingEmbeddingIntoJson,
+} from '../lib/Index'
 import { extractDetailsToEmbed, generateEmbedding } from '../common/utils'
 import {
   CSV_TO_JSON_SUCCESS_MESSAGE,
@@ -6,6 +11,8 @@ import {
   JSON_EMBEDDING_SUCCESS_MESSAGE,
   EXTRACTED_ONLY_IMPORTANT_MESSAGE,
 } from '../common/consoleMessage'
+
+import { batchUpsertData, createIndex, fetchData } from '../index'
 
 /**
  * Initializes the conversion of a CSV file to JSON and creates text and JSON embeddings.
@@ -27,34 +34,30 @@ export async function initializeConversionAndEmbeddingGeneration(
   textToEmbed?: string,
 ): Promise<void> {
   // Validate input parameters
-  if (!csvFilePath || !jsonFilePath || !textToEmbed) {
+  if (!csvFilePath || !jsonFilePath) {
     throw new Error('Invalid input: one or more parameters are null or undefined.')
   }
 
   try {
     // Convert CSV to JSON
-    await convertCsvToJson(csvFilePath, jsonFilePath)
-    console.log(CSV_TO_JSON_SUCCESS_MESSAGE)
-
-    // Generate text embedding
-    const reply = await generateTextEmbedding(textToEmbed)
-    console.log(TEXT_EMBEDDING_SUCCESS_MESSAGE)
+    const converted =  await convertCsvToJson(csvFilePath, jsonFilePath)
+    console.log(CSV_TO_JSON_SUCCESS_MESSAGE, converted)
 
     // Extracted JSON object embedding
     const extractedDetailsToEmbed = await extractDetailsToEmbed(jsonFilePath)
-    console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE)
+    console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE, extractedDetailsToEmbed)
 
     // Generated JSON embeddings
     const jsonEmbedding = await generateEmbedding(extractedDetailsToEmbed)
-    console.log(JSON_EMBEDDING_SUCCESS_MESSAGE)
 
-    const result = await sendingEmbeddingIntoJson(jsonEmbedding)
-    console.log(result);
-    
-    
+    console.log(JSON_EMBEDDING_SUCCESS_MESSAGE, jsonEmbedding)
 
+    const result = await writingEmbeddingIntoJson(jsonEmbedding)
+    const createIndexResult = await createIndex()
+    const upsertData = await batchUpsertData(jsonEmbedding)
+    const logdata = await fetchData()
+    console.log('data is fetched correctly.', logdata)
   } catch (error) {
-    // Handle errors during initialization
     throw new Error(
       `Initialization failed: ${error instanceof Error ? error.message : 'Unexpected error occurred.'}`,
     )
