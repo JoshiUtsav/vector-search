@@ -1,6 +1,6 @@
 import { promises as fsp } from 'fs'
-import { generateJsonEmbedding } from '../lib/Index'
-import { EmbeddingResult, DataObject } from "../types/index.d"
+import { generateTextEmbedding } from '../lib/Index'
+import { EmbeddingResult, DataObject } from '../types/index.d'
 
 /**
  * Extracts specific details from a JSON file and returns them as an array of objects.
@@ -39,7 +39,7 @@ export async function extractDetailsToEmbed(jsonFilePath: string): Promise<DataO
         Industry: item['Industry'] || '',
         State: item['State'] || '',
         City: item['City'] || '',
-      }))      
+      }))
 
     return extractedDetails
   } catch (error) {
@@ -62,19 +62,18 @@ export async function generateEmbedding(data: DataObject[]): Promise<EmbeddingRe
   }
 
   const embeddings: EmbeddingResult[] = []
-
   // Loop through the keys of the data object
   for (const key in data) {
     // Check if the key is a property of data, not inherited from the prototype chain
     if (Object.prototype.hasOwnProperty.call(data, key)) {
       try {
         // Convert the value associated with the key to a JSON string
-        const jsonData = JSON.stringify((data as any)[key]).replace(/[{,":}"}]/g, ' ');
-        console.log("Cleaned JSON Data: ", jsonData);
-        
+        const jsonData = JSON.stringify((data as any)[key]).replace(/[{,":}"}]/g, ' ')
+        console.log('Cleaned JSON Data:')
+
         // Generate the embedding for the jsonData
-        const embedding = await generateJsonEmbedding(jsonData)
-        embeddings.push({ id: key, values:embedding })
+        const embedding = await generateTextEmbedding(jsonData)
+        embeddings.push({ id: key, values: embedding })
       } catch (error) {
         // Handle any errors during JSON stringification or embedding generation
         console.error(

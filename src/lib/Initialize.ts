@@ -1,9 +1,4 @@
-import {
-  convertCsvToJson,
-  generateTextEmbedding,
-  generateJsonEmbedding,
-  writingEmbeddingIntoJson,
-} from '../lib/Index'
+import { convertCsvToJson, generateTextEmbedding, writingEmbeddingIntoJson } from '../lib/Index'
 import { extractDetailsToEmbed, generateEmbedding } from '../common/utils'
 import {
   CSV_TO_JSON_SUCCESS_MESSAGE,
@@ -12,7 +7,7 @@ import {
   EXTRACTED_ONLY_IMPORTANT_MESSAGE,
 } from '../common/consoleMessage'
 
-import { batchUpsertData, createIndex, fetchData } from '../index'
+import { batchUpsertData, createIndex } from '../lib/database'
 
 /**
  * Initializes the conversion of a CSV file to JSON and creates text and JSON embeddings.
@@ -40,23 +35,21 @@ export async function initializeConversionAndEmbeddingGeneration(
 
   try {
     // Convert CSV to JSON
-    const converted =  await convertCsvToJson(csvFilePath, jsonFilePath)
-    console.log(CSV_TO_JSON_SUCCESS_MESSAGE, converted)
+    const converted = await convertCsvToJson(csvFilePath, jsonFilePath)
+    console.log(CSV_TO_JSON_SUCCESS_MESSAGE)
 
     // Extracted JSON object embedding
     const extractedDetailsToEmbed = await extractDetailsToEmbed(jsonFilePath)
-    console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE, extractedDetailsToEmbed)
+    console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE)
 
     // Generated JSON embeddings
     const jsonEmbedding = await generateEmbedding(extractedDetailsToEmbed)
 
-    console.log(JSON_EMBEDDING_SUCCESS_MESSAGE, jsonEmbedding)
+    console.log(JSON_EMBEDDING_SUCCESS_MESSAGE)
 
     const result = await writingEmbeddingIntoJson(jsonEmbedding)
     const createIndexResult = await createIndex()
     const upsertData = await batchUpsertData(jsonEmbedding)
-    const logdata = await fetchData()
-    console.log('data is fetched correctly.', logdata)
   } catch (error) {
     throw new Error(
       `Initialization failed: ${error instanceof Error ? error.message : 'Unexpected error occurred.'}`,
