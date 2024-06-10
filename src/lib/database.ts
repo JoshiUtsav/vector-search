@@ -21,7 +21,7 @@ export async function batchUpsertData(data: EmbeddingResult[]): Promise<void> {
     try {
       console.log('data ready to upsert')
       const upsert = await index.upsert(vectors)
-      console.log(`Upserted batch of ${batch.length} vectors`)
+      // console.log(`Upserted batch of ${batch.length} vectors`)
     } catch (error) {
       console.error('Error upserting batch:', error)
     }

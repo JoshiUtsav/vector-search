@@ -5,6 +5,8 @@ import {
   TEXT_EMBEDDING_SUCCESS_MESSAGE,
   JSON_EMBEDDING_SUCCESS_MESSAGE,
   EXTRACTED_ONLY_IMPORTANT_MESSAGE,
+  JSON_SUCCESS_MESSAGE,
+  UPSERT_SUCCESS_MESSAGE,
 } from '../common/consoleMessage'
 
 import { batchUpsertData, createIndex } from '../lib/database'
@@ -44,12 +46,17 @@ export async function initializeConversionAndEmbeddingGeneration(
 
     // Generated JSON embeddings
     const jsonEmbedding = await generateEmbedding(extractedDetailsToEmbed)
-
     console.log(JSON_EMBEDDING_SUCCESS_MESSAGE)
 
+    // Wrote Embdedding into JSON
     const result = await writingEmbeddingIntoJson(jsonEmbedding)
+    console.log(JSON_SUCCESS_MESSAGE)
+
     const createIndexResult = await createIndex()
+
+    // Data Upeserted to database
     const upsertData = await batchUpsertData(jsonEmbedding)
+    console.log(UPSERT_SUCCESS_MESSAGE)
   } catch (error) {
     throw new Error(
       `Initialization failed: ${error instanceof Error ? error.message : 'Unexpected error occurred.'}`,
