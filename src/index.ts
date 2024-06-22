@@ -19,8 +19,8 @@ app.use((error: Error, req: Request, res: Response, next: Function) => {
   res.status(500).send(`Internal Server Error: ${error.message}`)
 })
 
-app.get('/', (req : Request, res: Response) => {
-  res.sendStatus(200)
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({ message: 'Hello, world!' })
 })
 
 app.post('/query', async (req, res) => {
