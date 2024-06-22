@@ -1,7 +1,8 @@
+/* Database */
+
 import type { EmbeddingResult, IndexList, IndexInfo } from '../types/index.d'
 import generateTextEmbedding from './embeddings'
 import { pc } from '../config/index'
-// Database
 const indexName = 'example-index'
 const namespace = 'example-namespace'
 const index = pc.Index(indexName)
@@ -21,7 +22,6 @@ export async function batchUpsertData(data: EmbeddingResult[]): Promise<void> {
     try {
       console.log('data ready to upsert')
       const upsert = await index.upsert(vectors)
-      // console.log(`Upserted batch of ${batch.length} vectors`)
     } catch (error) {
       console.error('Error upserting batch:', error)
     }
