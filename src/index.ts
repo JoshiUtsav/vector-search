@@ -20,7 +20,7 @@ app.use((error: Error, req: Request, res: Response, next: Function) => {
 })
 
 app.get('/', (req: Request, res: Response) => {
-  res.sendstatus(200)
+  res.status(200).send("Ok")
 })
 
 app.post('/query', async (req, res) => {
