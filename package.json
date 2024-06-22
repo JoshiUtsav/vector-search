@@ -4,7 +4,7 @@
   "description": "This is a bug resolve in ",
   "main": "index.js",
   "engines": {
-    "node": ">=18.0"
+    "node": ">=17.0"
   },
   "scripts": {
     "dev": "tsc-watch --onSuccess \"node -r dotenv/config --experimental-json-modules dist/index.js\"",
