@@ -1,4 +1,3 @@
 export { default as generateTextEmbedding } from './embeddings'
-export { default as convertCsvToJson } from './converter'
-export { writingEmbeddingIntoJson } from "./converter"
+export { default as Converter } from './converter'
 export { batchUpsertData } from "./database"

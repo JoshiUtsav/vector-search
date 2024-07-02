@@ -1,27 +1,37 @@
-const fs = require('fs')
-const csvtojson = require('csvtojson')
-const path = require('path')
-import { CSV_FILE_PATH, JSON_FILE_PATH } from '../config/index'
-import { convertCsvToJson } from "../lib/Index"
+import * as fs from 'fs'
+import * as path from 'path'
+import { FilePath } from '../config/index'
+import { Converter } from '../lib/Index'
 
-// Function to watch for file changes
-function watchFileChanges(csvPath: string, jsonPath: string, interval = 1000) {
-  let csvLastModified = fs.statSync(csvPath).mtimeMs
-  let jsonLastModified = fs.statSync(jsonPath).mtimeMs
+class FileWatcher extends Converter {
+  private interval: number
+  private csvLastModified: number
+  private jsonLastModified: number
+  private intervalId: NodeJS.Timeout | null
 
-  setInterval(() => {
-    const csvStats = fs.statSync(csvPath)
-    const jsonStats = fs.statSync(jsonPath)
+  constructor(CSV_FILE_PATH: string, JSON_FILE_PATH: string, interval = 1000) {
+    super(CSV_FILE_PATH, JSON_FILE_PATH)
+    this.interval = interval  
+    this.csvLastModified = fs.statSync(this.CSV_FILE_PATH).mtimeMs
+    this.jsonLastModified = fs.statSync(this.JSON_FILE_PATH).mtimeMs
+    this.intervalId = null
+  }
 
-    if (csvStats.mtimeMs > csvLastModified) {
-      convertCsvToJson(csvPath, jsonPath)
-      csvLastModified = csvStats.mtimeMs
+  public startWatching() {
+    this.intervalId = setInterval(() => {
+      const csvStats = fs.statSync(this.CSV_FILE_PATH)
+      const jsonStats = fs.statSync(this.JSON_FILE_PATH)
+      if (csvStats.mtimeMs > this.csvLastModified) {
+        this.convertCsvToJson(this.CSV_FILE_PATH, this.JSON_FILE_PATH)
+        this.csvLastModified = csvStats.mtimeMs
+      }
+    }, this.interval)
+  }
+
+  public stopWatching() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId)
+      this.intervalId = null
     }
-  }, interval)
+  }
 }
-
-// Example usage:
-const csvPath = CSV_FILE_PATH
-const jsonPath = JSON_FILE_PATH
-
-watchFileChanges(csvPath, jsonPath)

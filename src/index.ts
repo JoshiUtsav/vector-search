@@ -1,41 +1,69 @@
-import express, { Request, Response } from 'express'
-import http from 'http'
-import { PORT, CSV_FILE_PATH, JSON_FILE_PATH } from './config'
+import express, { Application, Request, Response, NextFunction } from 'express'
+import http, { Server } from 'http'
+import { PORT, FilePath } from './config'
 import path from 'path'
 import { generateTextEmbedding, batchUpsertData } from './lib/Index'
 import { PINECONE_API_KEY } from './config/index'
-import { initializeConversionAndEmbeddingGeneration } from './lib/Initialize'
+import Converter from './lib/converter'
+import { ConversionAndEmbeddingService } from './lib/Initialize'
 import type { EmbeddingResult, IndexInfo, IndexList } from './types/index.d'
-import { searchQuery } from './lib/database'
 
-const app = express()
-const server = http.createServer(app)
+class AppServer {
+  private app: Application
+  private server: Server
 
-app.use(express.json({ limit: '16kb' }))
-app.use(express.urlencoded({ extended: true, limit: '16kb' }))
-app.use(express.static(path.resolve(__dirname, 'public')))
-
-app.use((error: Error, req: Request, res: Response, next: Function) => {
-  res.status(500).send(`Internal Server Error: ${error.message}`)
-})
-
-app.get('/', (req: Request, res: Response) => {
-  res.status(200).send("Ok")
-})
-
-app.post('/query', async (req, res) => {
-  try {
-    const { query } = req.body
-    const matchResults = await searchQuery(query)
-    return res.json({ matches: matchResults })
-  } catch (error) {
-    console.error('Error processing query:', error)
-    res.status(500).json({ error: 'Internal server error' })
+  constructor() {
+    this.app = express()
+    this.server = http.createServer(this.app)
+    this.initializeMiddleware()
+    this.initializeRoutes()
+    this.initializeErrorHandling()
+    this.initialize()
   }
-})
 
-initializeConversionAndEmbeddingGeneration(CSV_FILE_PATH, JSON_FILE_PATH).catch(console.error)
+  private initializeMiddleware() {
+    this.app.use(express.json({ limit: '16kb' }))
+    this.app.use(express.urlencoded({ extended: true, limit: '16kb' }))
+    this.app.use(express.static(path.resolve(__dirname, 'public')))
+  }
 
-server.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`)
-})
+  private initializeRoutes() {
+    this.app.get('/', this.handleRoot)
+  }
+
+  private initializeErrorHandling() {
+    this.app.use(this.handleError)
+  }
+
+  private async initialize() {
+    try {
+      const { CSV_FILE_PATH, JSON_FILE_PATH, JSON_WRITE_PATH } = FilePath
+      const convert = new Converter(CSV_FILE_PATH, JSON_FILE_PATH, JSON_WRITE_PATH)
+      const service = new ConversionAndEmbeddingService(
+        CSV_FILE_PATH,
+        JSON_FILE_PATH,
+        JSON_WRITE_PATH,
+      )
+      service.initializeConversionAndEmbeddingGeneration().catch(console.error)
+    } catch (error) {
+      console.error('Error during initialization:', error)
+    }
+  }
+
+  private handleRoot(req: Request, res: Response) {
+    res.status(200).send('Ok')
+  }
+
+  private handleError(error: Error, req: Request, res: Response, _next: NextFunction) {
+    res.status(500).send(`Internal Server Error: ${error.message}`)
+  }
+
+  public start() {
+    this.server.listen(PORT, () => {
+      console.log(`Server listening on port ${PORT}`)
+    })
+  }
+}
+
+const appServer = new AppServer()
+appServer.start()

@@ -1,65 +1,44 @@
-import { convertCsvToJson, generateTextEmbedding, writingEmbeddingIntoJson } from '../lib/Index'
-import { extractDetailsToEmbed, generateEmbedding } from '../common/utils'
-import {
-  CSV_TO_JSON_SUCCESS_MESSAGE,
-  TEXT_EMBEDDING_SUCCESS_MESSAGE,
-  JSON_EMBEDDING_SUCCESS_MESSAGE,
-  EXTRACTED_ONLY_IMPORTANT_MESSAGE,
-  JSON_SUCCESS_MESSAGE,
-  UPSERT_SUCCESS_MESSAGE,
-} from '../common/consoleMessage'
-
+import { Converter, generateTextEmbedding } from '../lib/Index'
+import EmbeddingProcessor from '../common/utils'
+import MessageConstants from '../common/consoleMessage'
 import { batchUpsertData, createIndex } from '../lib/database'
+import type { DataObject, EmbeddingResult } from '../types/index.d'
 
-/**
- * Initializes the conversion of a CSV file to JSON and creates text and JSON embeddings.
- *
- * This function takes the paths to a CSV file and a JSON file, as well as text and a JSON object
- * to be converted into embeddings. It performs the conversion of the CSV to JSON, generates an
- * embedding from the given text, and creates an embedding from the JSON object. It logs the progress
- * and throws an error if any step fails.
- *
- * @param csvFilePath Path to the CSV file to be converted.
- * @param jsonFilePath Path where the converted JSON file will be saved.
- * @param textToEmbed Text to be converted into an embedding.
- * @throws Will throw an error if the input parameters are invalid or if any operation fails.
- */
-
-export async function initializeConversionAndEmbeddingGeneration(
-  csvFilePath: string,
-  jsonFilePath: string,
-  textToEmbed?: string,
-): Promise<void> {
-  // Validate input parameters
-  if (!csvFilePath || !jsonFilePath) {
-    throw new Error('Invalid input: one or more parameters are null or undefined.')
+export class ConversionAndEmbeddingService extends Converter {
+  public jsonEmbedding: EmbeddingResult[] = []
+  constructor(CSV_FILE_PATH: string, JSON_FILE_PATH: string, textToEmbed: string) {
+    super(CSV_FILE_PATH, JSON_FILE_PATH, textToEmbed)
   }
 
-  try {
-    // Convert CSV to JSON
-    const converted = await convertCsvToJson(csvFilePath, jsonFilePath)
-    console.log(CSV_TO_JSON_SUCCESS_MESSAGE)
+  async initializeConversionAndEmbeddingGeneration(): Promise<void> {
+    if (!this.CSV_FILE_PATH || !this.JSON_FILE_PATH || !this.JSON_WRITE_PATH) {
+      throw new Error('Invalid input: one or more parameters are null or undefined.')
+    }
 
-    // Extracted JSON object embedding
-    const extractedDetailsToEmbed = await extractDetailsToEmbed(jsonFilePath)
-    console.log(EXTRACTED_ONLY_IMPORTANT_MESSAGE)
+    try {
+      const converted: object[] = await this.convertCsvToJson(
+        this.CSV_FILE_PATH,
+        this.JSON_FILE_PATH,
+        this.JSON_WRITE_PATH,
+      )
+      console.log(MessageConstants.CSV_TO_JSON_SUCCESS_MESSAGE)
 
-    // Generated JSON embeddings
-    const jsonEmbedding = await generateEmbedding(extractedDetailsToEmbed)
-    console.log(JSON_EMBEDDING_SUCCESS_MESSAGE)
+      const extractedDetailsToEmbed: DataObject[] = await EmbeddingProcessor.extractDetailsToEmbed(
+        this.JSON_FILE_PATH,
+      )
+      console.log(MessageConstants.EXTRACTED_ONLY_IMPORTANT_MESSAGE)
 
-    // Wrote Embdedding into JSON
-    const result = await writingEmbeddingIntoJson(jsonEmbedding)
-    console.log(JSON_SUCCESS_MESSAGE)
+      this.jsonEmbedding = await EmbeddingProcessor.generateEmbedding(extractedDetailsToEmbed)
+      console.log(MessageConstants.JSON_EMBEDDING_SUCCESS_MESSAGE)
 
-    const createIndexResult = await createIndex()
+      const createIndexResult: boolean = await createIndex()
 
-    // Data Upeserted to database
-    const upsertData = await batchUpsertData(jsonEmbedding)
-    console.log(UPSERT_SUCCESS_MESSAGE)
-  } catch (error) {
-    throw new Error(
-      `Initialization failed: ${error instanceof Error ? error.message : 'Unexpected error occurred.'}`,
-    )
+      const upsertData: boolean = await batchUpsertData(this.jsonEmbedding)
+      console.log(MessageConstants.UPSERT_SUCCESS_MESSAGE)
+    } catch (error) {
+      throw new Error(
+        `Initialization failed: ${error instanceof Error ? error.message : 'Unexpected error occurred.'}`,
+      )
+    }
   }
 }

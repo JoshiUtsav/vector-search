@@ -2,35 +2,38 @@ import csv from 'csvtojson'
 import fs from 'fs'
 import { promisify } from 'util'
 import path from 'path'
-import { CSV_FILE_PATH, JSON_FILE_PATH, JSON_FILE_PATH_EMBEDDED } from '../config/index'
-
+import { FilePath } from '../config/index'
+import { ConversionAndEmbeddingService } from './Initialize'
 const writeFileAsync = promisify(fs.writeFile)
 
-async function convertCsvToJson(csvFilePath: string, jsonFilePath: string) {
-  try {
-    const jsonArray = await csv().fromFile(csvFilePath)
-    await writeFileAsync(jsonFilePath, JSON.stringify(jsonArray, null, 2))
-    return jsonArray
-  } catch (error) {
-    console.error('Error converting CSV to JSON:', error)
-    throw error
+class Converter {
+  protected CSV_FILE_PATH: string
+  protected JSON_FILE_PATH: string
+  protected JSON_WRITE_PATH?: string
+
+  constructor(CSV_FILE_PATH: string, JSON_FILE_PATH: string, JSON_WRITE_PATH?: string) {
+    this.CSV_FILE_PATH = CSV_FILE_PATH
+    this.JSON_FILE_PATH = JSON_FILE_PATH
+    this.JSON_WRITE_PATH = JSON_WRITE_PATH
+  }
+
+  async convertCsvToJson(CSV_FILE_PATH: string, JSON_FILE_PATH: string, JSON_WRITE_PATH?: string) {
+    try {
+      const jsonArray = await csv().fromFile(CSV_FILE_PATH)
+      // jsonArray.forEach((entry, index) => {
+      //   entry.embedding = jsonEmbedding[index]
+      // })
+
+      const jsonContent = JSON.stringify(jsonArray, null, 2)
+
+      await writeFileAsync(JSON_FILE_PATH, jsonContent, 'utf8')
+
+      return jsonArray
+    } catch (error) {
+      console.error('Error processing CSV and adding embeddings:', error)
+      throw error
+    }
   }
 }
 
-async function writingEmbeddingIntoJson(jsonEmbedding: any) {
-  try {
-    const jsonArray = await convertCsvToJson(CSV_FILE_PATH, JSON_FILE_PATH)
-    jsonArray.forEach((entry, index) => {
-      entry.embedding = jsonEmbedding[index]
-    })
-    const jsonContent = JSON.stringify(jsonEmbedding, null, 2)
-    await writeFileAsync(JSON_FILE_PATH_EMBEDDED, jsonContent, 'utf8')
-    return jsonArray
-  } catch (error) {
-    console.error('Error sending embedding into JSON:', error)
-    throw error
-  }
-}
-
-export default convertCsvToJson
-export { writingEmbeddingIntoJson }
+export default Converter

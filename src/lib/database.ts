@@ -1,36 +1,52 @@
 /* Database */
-
 import type { EmbeddingResult, IndexList, IndexInfo } from '../types/index.d'
 import generateTextEmbedding from './embeddings'
 import { pc } from '../config/index'
+
 const indexName = 'example-index'
 const namespace = 'example-namespace'
 const index = pc.Index(indexName)
-const BATCH_SIZE = 100
-export async function batchUpsertData(data: EmbeddingResult[]): Promise<void> {
-  const batches = []
-  for (let i = 0; i < data.length; i += BATCH_SIZE) {
-    batches.push(data.slice(i, i + BATCH_SIZE))
+
+/**
+ * Upserts a batch of embedding results into the index.
+ * @param data - The array of embedding results to upsert.
+ * @returns A Promise that resolves to a boolean indicating whether the upsert was successful.
+ */
+export async function batchUpsertData(data: EmbeddingResult[]): Promise<boolean> {
+  const BATCH_SIZE: number = 100;
+  const batches: EmbeddingResult[][] = [];
+
+  // Create batches
+  for (let i: number = 0; i < data.length; i += BATCH_SIZE) {
+    batches.push(data.slice(i, i + BATCH_SIZE));
   }
 
+  // Process each batch
   for (const batch of batches) {
-    const vectors = batch.map((item) => ({
+    const vectors: { id: string; values: number[]; }[] = batch.map((item: EmbeddingResult) => ({
       id: item.id,
       values: item.values,
-    }))
+    }));
 
     try {
-      console.log('data ready to upsert')
-      const upsert = await index.upsert(vectors)
-    } catch (error) {
-      console.error('Error upserting batch:', error)
+      await index.upsert(vectors);
+    } catch (error: any) {
+      console.error('Error upserting batch:', error);
+      return false;
     }
   }
+
+  return true;
 }
 
-export async function createIndex(): Promise<void> {
+/**
+ * Creates an index if it does not already exist.
+ * @returns A Promise that resolves to a boolean indicating whether the index was created successfully.
+ * @throws {Error} If there was an error creating the index.
+ */
+export async function createIndex(): Promise<boolean> {
   try {
-    const existingIndexes: IndexList = (await pc.listIndexes()) as IndexList
+    const existingIndexes: IndexList = (await pc.listIndexes()) as IndexList;
     if (!existingIndexes.indexes.some((index: IndexInfo) => index.name === indexName)) {
       await pc.createIndex({
         name: indexName,
@@ -38,34 +54,18 @@ export async function createIndex(): Promise<void> {
         metric: 'euclidean',
         spec: {
           serverless: {
-            cloud: 'aws',
-            region: 'us-east-1',
+            cloud: 'aws' as const,
+            region: 'us-east-1' as const,
           },
         },
-      })
-      console.log('Index created successfully.')
+      });
+      console.log('Index created successfully.');
     } else {
-      console.log('Index already exists.')
+      console.log('Index already exists.');
     }
-  } catch (error) {
-    console.error('Error creating index:', error)
+  } catch (error: unknown) {
+    console.error('Error creating index:', error);
+    return false;
   }
-}
-
-export async function searchQuery(query: string): Promise<EmbeddingResult[]> {
-  if (!query) {
-    throw new Error('Query values must be a string')
-  }
-  const genEmbedding = await generateTextEmbedding(query.toString())
-
-  console.log('Query Embeddings')
-
-  console.log('Generated Query Embedding:')
-  const response = await index.namespace(namespace).query({
-    topK: 10,
-    vector: genEmbedding,
-    includeValues: true,
-  })
-
-  return response.matches
+  return true;
 }
