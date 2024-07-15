@@ -3,3 +3,4 @@ dist
 .env
 /public/data.csv
 /public/data.json
+.vscode

@@ -35,7 +35,7 @@ class EmbeddingProcessor extends Converter {
           Industry: item['Industry'] || '',
           State: item['State'] || '',
           City: item['City'] || '',
-        }))        
+        }))
 
       return extractedDetails
     } catch (error) {

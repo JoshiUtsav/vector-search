@@ -5,6 +5,7 @@ import path from 'path'
 import { generateTextEmbedding, batchUpsertData } from './lib/Index'
 import { PINECONE_API_KEY } from './config/index'
 import Converter from './lib/converter'
+import cors from "cors"
 import { ConversionAndEmbeddingService } from './lib/Initialize'
 import type { EmbeddingResult, IndexInfo, IndexList } from './types/index.d'
 
@@ -25,10 +26,12 @@ class AppServer {
     this.app.use(express.json({ limit: '16kb' }))
     this.app.use(express.urlencoded({ extended: true, limit: '16kb' }))
     this.app.use(express.static(path.resolve(__dirname, 'public')))
+    this.app.use(cors())
   }
 
   private initializeRoutes() {
     this.app.get('/', this.handleRoot)
+    this.app.post('/api', this.handleEmbedding)
   }
 
   private initializeErrorHandling() {
@@ -50,13 +53,28 @@ class AppServer {
     }
   }
 
-  private handleRoot(req: Request, res: Response) {
+  private handleRoot(req: Request, res: Response) {  
     res.status(200).send('Ok')
+  }
+
+  private async handleEmbedding(req: Request, res: Response) {
+    try {
+      const { text } = req.body
+      if (!text) {
+        return res.status(400).json({ error: 'Text is required' })
+      }
+      const embedding = await generateTextEmbedding(text)
+      res.status(200).json({ embedding })
+    } catch (error: any) {
+      console.error(error)
+      res.status(500).json({ error: 'Failed to generate embedding', details: error.message })
+    }
   }
 
   private handleError(error: Error, req: Request, res: Response, _next: NextFunction) {
     res.status(500).send(`Internal Server Error: ${error.message}`)
   }
+
 
   public start() {
     this.server.listen(PORT, () => {
