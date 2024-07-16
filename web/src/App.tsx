@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
  */
 function App(): JSX.Element {
   const [inputText, setInputText] = useState<string>('')
+  const [outputText, setOutputText] = useState<string>('')
 
   /**
    * Handles the form submission by sending a POST request to the backend with the input text.
@@ -17,7 +18,7 @@ function App(): JSX.Element {
   const handleSubmit = async (): Promise<void> => {
     try {
       const request = await axios.post('http://localhost:3000/api', { text: inputText })
-      console.log('Request successful:', request.data)
+      setOutputText(request.data.Text)
     } catch (error) {
       console.error('Error making request:', error)
     }
@@ -38,6 +39,11 @@ function App(): JSX.Element {
       <button type="submit" onClick={handleSubmit}>
         Submit
       </button>
+
+      <div>
+        <h1>Response from backend</h1>
+        <div>{outputText}</div>
+      </div>
     </>
   )
 }

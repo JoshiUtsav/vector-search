@@ -63,8 +63,7 @@ class AppServer {
       if (!text) {
         return res.status(400).json({ error: 'Text is required' })
       }
-      const embedding = await generateTextEmbedding(text)
-      res.status(200).json({ embedding })
+      res.status(200).json({ Text: "Request successful" })
     } catch (error: any) {
       console.error(error)
       res.status(500).json({ error: 'Failed to generate embedding', details: error.message })
@@ -74,7 +73,6 @@ class AppServer {
   private handleError(error: Error, req: Request, res: Response, _next: NextFunction) {
     res.status(500).send(`Internal Server Error: ${error.message}`)
   }
-
 
   public start() {
     this.server.listen(PORT, () => {

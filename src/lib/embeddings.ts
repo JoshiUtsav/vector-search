@@ -11,7 +11,7 @@ const openai = new OpenAI({
  * @param text The text to generate the embedding for.
  * @returns {Promise<number[]>} A Promise containing the embedding vector.
  */
-async function generateTextEmbedding(text: string): Promise<number[]> {
+async function generateEmbedding(text: string): Promise<number[]> {
   if (!text) {
     throw new Error('No text provided for embedding generation.')
   }
@@ -36,4 +36,4 @@ async function generateTextEmbedding(text: string): Promise<number[]> {
   }
 }
 
-export default generateTextEmbedding
+export default generateEmbedding

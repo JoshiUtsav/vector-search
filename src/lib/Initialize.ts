@@ -1,5 +1,4 @@
 import { Converter, generateTextEmbedding } from '../lib/Index'
-import EmbeddingProcessor from '../common/utils'
 import MessageConstants from '../common/consoleMessage'
 import { batchUpsertData, createIndex } from '../lib/database'
 import type { DataObject, EmbeddingResult } from '../types/index.d'
@@ -23,12 +22,12 @@ export class ConversionAndEmbeddingService extends Converter {
       )
       console.log(MessageConstants.CSV_TO_JSON_SUCCESS_MESSAGE)
 
-      const extractedDetailsToEmbed: DataObject[] = await EmbeddingProcessor.extractDetailsToEmbed(
+      const extractedDetailsToEmbed: DataObject[] = await Converter.extractDetailsToEmbed(
         this.JSON_FILE_PATH,
       )
       console.log(MessageConstants.EXTRACTED_ONLY_IMPORTANT_MESSAGE)
 
-      this.jsonEmbedding = await EmbeddingProcessor.generateEmbedding(extractedDetailsToEmbed)
+      this.jsonEmbedding = await Converter.generateEmbedding(extractedDetailsToEmbed)
       console.log(MessageConstants.JSON_EMBEDDING_SUCCESS_MESSAGE)
 
       const createIndexResult: boolean = await createIndex()
