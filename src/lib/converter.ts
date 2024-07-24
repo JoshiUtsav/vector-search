@@ -5,7 +5,7 @@ import path from 'path'
 import { FilePath } from '../config/index'
 import { ConversionAndEmbeddingService } from './Initialize'
 import { promises as fsp } from 'fs'
-import { generateTextEmbedding } from '../lib/Index'
+import { OpenAIService } from '../lib/Index'
 import { EmbeddingResult, DataObject } from '../types/index.d'
 const writeFileAsync = promisify(fs.writeFile)
 
@@ -28,7 +28,6 @@ class Converter {
       // })
 
       const jsonContent = JSON.stringify(jsonArray, null, 2)
-
       await writeFileAsync(JSON_FILE_PATH, jsonContent, 'utf8')
 
       return jsonArray
@@ -88,7 +87,7 @@ class Converter {
    * @returns An array of objects containing the key and its corresponding embedding.
    * @throws Will throw an error if the data object is null or undefined.
    */
-  static async generateEmbedding(data: DataObject[]): Promise<EmbeddingResult[]> {
+  static async ConvertInputTextIntoString(data: DataObject[]): Promise<EmbeddingResult[]> {
     if (!data) {
       throw new Error('No data provided for embedding generation.')
     }
@@ -102,7 +101,7 @@ class Converter {
           console.log('Cleaned JSON Data:')
 
           // Generate the embedding for the jsonData
-          const embedding = await generateTextEmbedding(jsonData)
+          const embedding = await OpenAIService.generateEmbedding(jsonData)
           embeddings.push({ id: key, values: embedding })
         } catch (error) {
           // Handle any errors during JSON stringification or embedding generation

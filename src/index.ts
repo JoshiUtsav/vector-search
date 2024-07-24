@@ -2,7 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express'
 import http, { Server } from 'http'
 import { PORT, FilePath } from './config'
 import path from 'path'
-import { generateTextEmbedding, batchUpsertData } from './lib/Index'
+import { OpenAIService, batchUpsertData } from './lib/Index'
 import { PINECONE_API_KEY } from './config/index'
 import Converter from './lib/converter'
 import cors from "cors"

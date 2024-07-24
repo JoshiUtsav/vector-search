@@ -1,4 +1,4 @@
-import { Converter, generateTextEmbedding } from '../lib/Index'
+import { Converter } from '../lib/Index'
 import MessageConstants from '../common/consoleMessage'
 import { batchUpsertData, createIndex } from '../lib/database'
 import type { DataObject, EmbeddingResult } from '../types/index.d'
@@ -27,7 +27,7 @@ export class ConversionAndEmbeddingService extends Converter {
       )
       console.log(MessageConstants.EXTRACTED_ONLY_IMPORTANT_MESSAGE)
 
-      this.jsonEmbedding = await Converter.generateEmbedding(extractedDetailsToEmbed)
+      this.jsonEmbedding = await Converter.ConvertInputTextIntoString(extractedDetailsToEmbed)
       console.log(MessageConstants.JSON_EMBEDDING_SUCCESS_MESSAGE)
 
       const createIndexResult: boolean = await createIndex()
