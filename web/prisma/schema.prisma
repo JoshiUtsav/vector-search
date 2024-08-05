@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model data {
+  Id                   String  @id
+  FirstName            String? @map("First Name")
+  LastName             String? @map("Last Name")
+  Title                String?
+  Company              String?
+  CompanyNameForEmails String? @map("Company Name for Emails")
+  Email                String?
+  EmailStatus          String? @map("Email Status")
+  Seniority            String?
+  MobilePhone          String? @map("Mobile Phone")
+  CorporatePhone       String? @map("Corporate Phone")
+  OtherPhone           String? @map("Other Phone")
+  Stage                String?
+  NumEmployees         String? @map("# Employees")
+  Industry             String?
+  Keywords             String?
+  PersonLinkedinUrl    String? @map("Person Linkedin Url")
+  Website              String?
+  CompanyLinkedinUrl   String? @map("Company Linkedin Url")
+  FacebookUrl          String? @map("Facebook Url")
+  TwitterUrl           String? @map("Twitter Url")
+  City                 String?
+  State                String?
+  Country              String?
+  CompanyAddress       String? @map("Company Address")
+  CompanyCity          String? @map("Company City")
+  CompanyState         String? @map("Company State")
+  CompanyCountry       String? @map("Company Country")
+  CompanyPhone         String? @map("Company Phone")
+  SeoDescription       String? @map("SEO Description")
+  Technologies         String?
+  AnnualRevenue        String? @map("Annual Revenue")
+  TotalFunding         String? @map("Total Funding")
+  LatestFunding        String? @map("Latest Funding")
+  LatestFundingAmount  String? @map("Latest Funding Amount")
+  LastRaisedAt         String? @map("Last Raised At")
+  EmailSent            String? @map("Email Sent")
+  EmailOpen            String? @map("Email Open")
+  EmailBounced         String? @map("Email Bounced")
+  Replied              String?
+  Demoed               String?
+  NumRetailLocations   String? @map("Number of Retail Locations")
+  ApolloContactId      String? @map("Apollo Contact Id")
+  ApolloAccountId      String? @map("Apollo Account Id")
+}

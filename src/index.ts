@@ -2,12 +2,10 @@ import express, { Application, Request, Response, NextFunction } from 'express'
 import http, { Server } from 'http'
 import { PORT, FilePath } from './config'
 import path from 'path'
-import { OpenAIService, batchUpsertData } from './lib/Index'
-import { PINECONE_API_KEY } from './config/index'
-import Converter from './lib/converter'
-import cors from "cors"
-import { ConversionAndEmbeddingService } from './lib/Initialize'
-import type { EmbeddingResult, IndexInfo, IndexList } from './types/index.d'
+import cors from 'cors'
+import { InitializationService } from './lib/Initialize'
+import Postgres_connection, { createIndex } from './lib/database'
+import Routes from './response'
 
 class AppServer {
   private app: Application
@@ -19,6 +17,7 @@ class AppServer {
     this.initializeMiddleware()
     this.initializeRoutes()
     this.initializeErrorHandling()
+    this.Database_Connections()
     this.initialize()
   }
 
@@ -30,8 +29,12 @@ class AppServer {
   }
 
   private initializeRoutes() {
-    this.app.get('/', this.handleRoot)
-    this.app.post('/api', this.handleEmbedding)
+    this.app.get('/', (req: Request, res: Response) => {
+      Routes.index(req, res)
+    })
+    this.app.post('/api', (req: Request, res: Response) => {
+      Routes.handleRequest(req, res)
+    })
   }
 
   private initializeErrorHandling() {
@@ -39,35 +42,13 @@ class AppServer {
   }
 
   private async initialize() {
-    try {
-      const { CSV_FILE_PATH, JSON_FILE_PATH, JSON_WRITE_PATH } = FilePath
-      const convert = new Converter(CSV_FILE_PATH, JSON_FILE_PATH, JSON_WRITE_PATH)
-      const service = new ConversionAndEmbeddingService(
-        CSV_FILE_PATH,
-        JSON_FILE_PATH,
-        JSON_WRITE_PATH,
-      )
-      service.initializeConversionAndEmbeddingGeneration().catch(console.error)
-    } catch (error) {
-      console.error('Error during initialization:', error)
-    }
+    const Initialize = new InitializationService(FilePath.CSV_FILE_PATH, FilePath.JSON_FILE_PATH)
+    await Initialize.initializeApplication()
   }
 
-  private handleRoot(req: Request, res: Response) {  
-    res.status(200).send('Ok')
-  }
-
-  private async handleEmbedding(req: Request, res: Response) {
-    try {
-      const { text } = req.body
-      if (!text) {
-        return res.status(400).json({ error: 'Text is required' })
-      }
-      res.status(200).json({ Text: "Request successful" })
-    } catch (error: any) {
-      console.error(error)
-      res.status(500).json({ error: 'Failed to generate embedding', details: error.message })
-    }
+  private async Database_Connections() {
+    await createIndex()
+    await Postgres_connection()
   }
 
   private handleError(error: Error, req: Request, res: Response, _next: NextFunction) {

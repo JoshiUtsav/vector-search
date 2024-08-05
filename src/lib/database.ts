@@ -1,42 +1,45 @@
 /* Database */
-import type { EmbeddingResult, IndexList, IndexInfo } from '../types/index.d'
-import generateTextEmbedding from './embeddings'
-import { pc } from '../config/index'
 
-const indexName = 'example-index'
-const namespace = 'example-namespace'
+// Pinecone Database
+import { pc } from '../config/index'
+import { DATABASE_URL, DB_NAME } from '../config/index'
+import mongoose from 'mongoose'
+
+const indexName = 'founder-data'
 const index = pc.Index(indexName)
+
+import MessageConstants from '../common/consoleMessage'
+import type { EmbeddingResult, IndexList, IndexInfo } from '../types/index.d'
 
 /**
  * Upserts a batch of embedding results into the index.
  * @param data - The array of embedding results to upsert.
  * @returns A Promise that resolves to a boolean indicating whether the upsert was successful.
  */
-export async function batchUpsertData(data: EmbeddingResult[]): Promise<boolean> {
-  const BATCH_SIZE: number = 100;
-  const batches: EmbeddingResult[][] = [];
+export async function UpsertData(data: EmbeddingResult[]): Promise<boolean> {
+  const vectors: { id: string; values: number[] }[] = data.map((item: EmbeddingResult) => ({
+    id: item.id,
+    values: item.values,
+  }))
 
-  // Create batches
-  for (let i: number = 0; i < data.length; i += BATCH_SIZE) {
-    batches.push(data.slice(i, i + BATCH_SIZE));
+  try {
+    await index.namespace('example').upsert(vectors)
+    console.log(MessageConstants.UPSERT_SUCCESS_MESSAGE)
+  } catch (error: any) {
+    console.error('Error upserting batch:', error)
+    return false
   }
 
-  // Process each batch
-  for (const batch of batches) {
-    const vectors: { id: string; values: number[]; }[] = batch.map((item: EmbeddingResult) => ({
-      id: item.id,
-      values: item.values,
-    }));
+  return true
+}
 
-    try {
-      await index.upsert(vectors);
-    } catch (error: any) {
-      console.error('Error upserting batch:', error);
-      return false;
-    }
-  }
-
-  return true;
+export async function QueryData(data: number[]) {
+  const QueryData = await index.namespace('example').query({
+    vector: data,
+    topK: 3,
+    includeValues: true,
+  })
+  return QueryData
 }
 
 /**
@@ -46,7 +49,7 @@ export async function batchUpsertData(data: EmbeddingResult[]): Promise<boolean>
  */
 export async function createIndex(): Promise<boolean> {
   try {
-    const existingIndexes: IndexList = (await pc.listIndexes()) as IndexList;
+    const existingIndexes: IndexList = (await pc.listIndexes()) as IndexList
     if (!existingIndexes.indexes.some((index: IndexInfo) => index.name === indexName)) {
       await pc.createIndex({
         name: indexName,
@@ -58,14 +61,35 @@ export async function createIndex(): Promise<boolean> {
             region: 'us-east-1' as const,
           },
         },
-      });
-      console.log('Index created successfully.');
+      })
+      console.log('Index created successfully.')
     } else {
-      console.log('Index already exists.');
+      console.log('Index already exists.')
     }
   } catch (error: unknown) {
-    console.error('Error creating index:', error);
-    return false;
+    console.error('Error creating index:', error)
+    return false
   }
-  return true;
+  return true
 }
+
+// Postgres daatabase
+
+export default function Postgres_connection() {
+  console.log('Connecting to Postgres')
+}
+
+// // Create batches
+// const BATCH_SIZE: number = 100
+// const batches: EmbeddingResult[] = []
+// for (let i: number = 0; i < data.length; i += BATCH_SIZE) {
+//   batches.push(data.slice(i, i + BATCH_SIZE))
+// }
+
+// Process each batch
+// for (const batch of batches) {
+// console.log('batch:', batch)
+
+// const vectors: { id: string; values: number[] }[] = batch.map((item: EmbeddingResult) => ({
+//   id: item.id,
+//   values: item.values,

@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    container_name: frontend
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PINECONE_API_KEY=your_pinecone_api_key
+      - PINECONE_ENVIRONMENT=your_pinecone_environment
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - database
+      - redis
+    networks:
+      - app-network
+
+  database:
+    image: postgres:latest
+    container_name: database
+    environment:
+      POSTGRES_USER: mydb_owner
+      POSTGRES_PASSWORD: SQpa3Ww7Fbgj
+      POSTGRES_DB: mydatabase
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+
+networks:
+  app-network:

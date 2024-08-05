@@ -1,14 +1,11 @@
-import { OpenAI } from 'openai' // Importing OpenAI module
-import { OPENAI_SECRET_KEY } from '../config/index' // Importing OpenAI secret key from configuration
+import { OpenAI } from 'openai'
+import { openai } from '../config/index' // Importing OpenAI secret key from configuration
 
 class OpenAIService {
   private openai: OpenAI
-
-  constructor(apiKey: string) {
-    // Creating an instance of OpenAI with the provided secret key
-    this.openai = new OpenAI({ apiKey })
+  constructor() {
+    this.openai = openai // Initialize the openai instance
   }
-
   /**
    * Generates an embedding vector for a specified text using OpenAI's model.
    * @param text The text to generate the embedding for.

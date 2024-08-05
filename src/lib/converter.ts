@@ -1,36 +1,47 @@
 import csv from 'csvtojson'
 import fs from 'fs'
 import { promisify } from 'util'
-import path from 'path'
-import { FilePath } from '../config/index'
-import { ConversionAndEmbeddingService } from './Initialize'
 import { promises as fsp } from 'fs'
-import { OpenAIService } from '../lib/Index'
-import { EmbeddingResult, DataObject } from '../types/index.d'
+import { CSV, DataObject, EmbeddingResult, Convert } from '../types/index.d'
+import { UpsertData } from './database'
 const writeFileAsync = promisify(fs.writeFile)
+import OpenAIService from '../lib/embeddings'
+import MessageConstants from '../common/consoleMessage'
 
-class Converter {
-  protected CSV_FILE_PATH: string
-  protected JSON_FILE_PATH: string
-  protected JSON_WRITE_PATH?: string
+/**
+ * Converter class for converting CSV to JSON and generating embeddings.
+ */
 
-  constructor(CSV_FILE_PATH: string, JSON_FILE_PATH: string, JSON_WRITE_PATH?: string) {
-    this.CSV_FILE_PATH = CSV_FILE_PATH
-    this.JSON_FILE_PATH = JSON_FILE_PATH
-    this.JSON_WRITE_PATH = JSON_WRITE_PATH
+class Converter implements Convert {
+  private readonly csvFilePath: string
+  private readonly jsonFilePath: string
+
+  constructor(csvFilePath: string, jsonFilePath: string) {
+    this.csvFilePath = csvFilePath
+    this.jsonFilePath = jsonFilePath
   }
 
-  async convertCsvToJson(CSV_FILE_PATH: string, JSON_FILE_PATH: string, JSON_WRITE_PATH?: string) {
+  /**
+   * Converts a CSV file to a JSON file and generates embeddings for each entry.
+   *
+   * @returns The converted JSON data.
+   * @throws An error if there is an issue with the CSV or JSON file, or with generating embeddings.
+   */
+  public async convertCsvToJson(): Promise<EmbeddingResult[]> {
     try {
-      const jsonArray = await csv().fromFile(CSV_FILE_PATH)
-      // jsonArray.forEach((entry, index) => {
-      //   entry.embedding = jsonEmbedding[index]
-      // })
+      const jsonData: CSV[] = await csv().fromFile(this.csvFilePath)
+      const jsonResponse = JSON.stringify(jsonData, null, 2)
+      await writeFileAsync(this.jsonFilePath, jsonResponse, 'utf8')
 
-      const jsonContent = JSON.stringify(jsonArray, null, 2)
-      await writeFileAsync(JSON_FILE_PATH, jsonContent, 'utf8')
+      const extractedDetails = await this.extractDetailsToEmbed(this.jsonFilePath)
+      console.log(MessageConstants.EXTRACTED_ONLY_IMPORTANT_MESSAGE)
 
-      return jsonArray
+      const embeddings = await this.generateEmbeddings(extractedDetails)
+      console.log(MessageConstants.INTO_SINGLE_STRING_MESSAGE)
+
+      await UpsertData(embeddings)
+
+      return embeddings
     } catch (error) {
       console.error('Error processing CSV and adding embeddings:', error)
       throw error
@@ -40,40 +51,32 @@ class Converter {
   /**
    * Extracts specific details from a JSON file and returns them as an array of objects.
    *
-   * This function reads a JSON file at the specified path, parses the content, and then
-   * extracts particular properties from each JSON object in the array. The expected
-   * properties are Title, Industry, State, and City. It filters out any invalid or
-   * non-object entries in the array.
-   *
+   * @param jsonFilePath - The path to the JSON file.
    * @returns An array of objects containing the extracted details.
-   * @throws Will throw an error if the jsonFilePath is null or undefined, if the JSON data is not an array,
-   *         or if there's an error in reading or parsing the JSON file.
+   * @throws An error if the JSON file is not an array or if there's an error reading or parsing the file.
    */
-
-  static async extractDetailsToEmbed(jsonFilePath: string): Promise<DataObject[]> {
+  private async extractDetailsToEmbed(jsonFilePath: string): Promise<DataObject[]> {
     try {
-      // Read the file and parse the JSON
       const data = await fsp.readFile(jsonFilePath, 'utf8')
       const jsonData = JSON.parse(data)
 
-      // Check if the parsed data is an array
       if (!Array.isArray(jsonData)) {
         throw new Error('JSON data is not an array.')
       }
 
-      // Map through the array and extract the required details
       const extractedDetails: DataObject[] = jsonData
         .filter((item) => typeof item === 'object' && !Array.isArray(item))
         .map((item) => ({
+          Id: item.Id || '',
           Title: item['Title'] || '',
           Industry: item['Industry'] || '',
           State: item['State'] || '',
           City: item['City'] || '',
         }))
 
+
       return extractedDetails
     } catch (error) {
-      // Handle any errors during file reading or JSON parsing
       throw new Error(
         `Error processing JSON file: ${error instanceof Error ? error.message : error}`,
       )
@@ -81,36 +84,37 @@ class Converter {
   }
 
   /**
-   * Generates embeddings for each key-value pair in the provided data object.
+   * Generates embeddings for each entry in the provided data.
    *
-   * @param data The data object for which embeddings are to be generated.
-   * @returns An array of objects containing the key and its corresponding embedding.
-   * @throws Will throw an error if the data object is null or undefined.
+   * @param data - The data to generate embeddings for.
+   * @returns An array of objects containing the ID and embedding values for each entry.
+   * @throws An error if no data is provided.
    */
-  static async ConvertInputTextIntoString(data: DataObject[]): Promise<EmbeddingResult[]> {
+  protected async generateEmbeddings(data: DataObject[]): Promise<EmbeddingResult[]> {
     if (!data) {
       throw new Error('No data provided for embedding generation.')
     }
 
     const embeddings: EmbeddingResult[] = []
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        try {
-          // Convert the value associated with the key to a JSON string
-          const jsonData = JSON.stringify((data as any)[key]).replace(/[{,":}"}]/g, ' ')
-          console.log('Cleaned JSON Data:')
+    const embeddingsService = new OpenAIService()
 
-          // Generate the embedding for the jsonData
-          const embedding = await OpenAIService.generateEmbedding(jsonData)
-          embeddings.push({ id: key, values: embedding })
-        } catch (error) {
-          // Handle any errors during JSON stringification or embedding generation
-          console.error(
-            `Error generating embedding for key "${key}": ${error instanceof Error ? error.message : error}`,
-          )
-        }
+    for (const item of data) {
+      try {
+        const jsonData = JSON.stringify(item).replace(/[{,":}"}]/g, ' ')
+        const embedding = await embeddingsService.generateEmbedding(jsonData)
+
+
+        console.log(jsonData);
+        
+
+        embeddings.push({ id: item.Id, values: embedding })
+      } catch (error) {
+        console.error(
+          `Error generating embedding for key "${item.Id}": ${error instanceof Error ? error.message : error}`,
+        )
       }
     }
+
     return embeddings
   }
 }

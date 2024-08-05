@@ -1,43 +1,51 @@
 import { Converter } from '../lib/Index'
 import MessageConstants from '../common/consoleMessage'
-import { batchUpsertData, createIndex } from '../lib/database'
-import type { DataObject, EmbeddingResult } from '../types/index.d'
+import Watcher from '../common/watcher'
+// import type { DataObject, EmbeddingResult } from '../types/index.d'
 
-export class ConversionAndEmbeddingService extends Converter {
-  public jsonEmbedding: EmbeddingResult[] = []
-  constructor(CSV_FILE_PATH: string, JSON_FILE_PATH: string, textToEmbed: string) {
-    super(CSV_FILE_PATH, JSON_FILE_PATH, textToEmbed)
+export class InitializationService {
+  private readonly csvFilePath: string
+  private readonly jsonFilePath: string
+  // public jsonEmbedding: EmbeddingResult[] = []
+
+  constructor(csvFilePath: string, jsonFilePath: string) {
+    this.validateInputs(csvFilePath, jsonFilePath)
+
+    this.csvFilePath = csvFilePath
+    this.jsonFilePath = jsonFilePath
   }
 
-  async initializeConversionAndEmbeddingGeneration(): Promise<void> {
-    if (!this.CSV_FILE_PATH || !this.JSON_FILE_PATH || !this.JSON_WRITE_PATH) {
-      throw new Error('Invalid input: one or more parameters are null or undefined.')
+  private async validateInputs(csvFilePath: string, jsonFilePath: string): Promise<void> {
+    if (!csvFilePath || !jsonFilePath) {
+      throw new Error(MessageConstants.INITIALIZATION_ERROR_MESSAGE)
     }
+  }
 
+  async initializeApplication() {
     try {
-      const converted: object[] = await this.convertCsvToJson(
-        this.CSV_FILE_PATH,
-        this.JSON_FILE_PATH,
-        this.JSON_WRITE_PATH,
-      )
-      console.log(MessageConstants.CSV_TO_JSON_SUCCESS_MESSAGE)
+      const converter = new Converter(this.csvFilePath, this.jsonFilePath)
+      const data = await converter.convertCsvToJson()
 
-      const extractedDetailsToEmbed: DataObject[] = await Converter.extractDetailsToEmbed(
-        this.JSON_FILE_PATH,
-      )
-      console.log(MessageConstants.EXTRACTED_ONLY_IMPORTANT_MESSAGE)
-
-      this.jsonEmbedding = await Converter.ConvertInputTextIntoString(extractedDetailsToEmbed)
-      console.log(MessageConstants.JSON_EMBEDDING_SUCCESS_MESSAGE)
-
-      const createIndexResult: boolean = await createIndex()
-
-      const upsertData: boolean = await batchUpsertData(this.jsonEmbedding)
-      console.log(MessageConstants.UPSERT_SUCCESS_MESSAGE)
+      if (data.length > 0) {
+        const watcher_index = new Watcher()
+        const lastKey = data[data.length - 1].id
+        return await watcher_index.watch(lastKey, data.length)
+      } else {
+        throw new Error('No data available to watch.')
+      }
     } catch (error) {
-      throw new Error(
-        `Initialization failed: ${error instanceof Error ? error.message : 'Unexpected error occurred.'}`,
-      )
+      throw this.handleError(error)
     }
+  }
+
+  private handleError(error: unknown): Error {
+    const errorMessage = error instanceof Error ? error.message : 'Unexpected error occurred.'
+    const initializationFailedMessage = `Initialization failed: ${errorMessage}`
+    return new Error(initializationFailedMessage)
   }
 }
+// this.jsonEmbedding = await Converter.ConvertInputTextIntoString(extractedDetailsToEmbed)
+// console.log(MessageConstants.JSON_EMBEDDING_SUCCESS_MESSAGE)
+// const createIndexResult: boolean = await createIndex()
+// const upsertData: boolean = await batchUpsertData(this.jsonEmbedding)
+// console.log(MessageConstants.UPSERT_SUCCESS_MESSAGE)

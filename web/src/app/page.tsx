@@ -1,12 +1,15 @@
+'use client'
+
 import axios from 'axios'
 import { useState } from 'react'
+import { Button, Input, Table } from '@/components/ui/index'
 
 /**
  * The main App component.
  *
  * @returns {JSX.Element} The rendered App component.
  */
-function App(): JSX.Element {
+export default function Home(): JSX.Element {
   const [inputText, setInputText] = useState<string>('')
   const [outputText, setOutputText] = useState<string>('')
 
@@ -26,19 +29,16 @@ function App(): JSX.Element {
 
   return (
     <>
-      {/* Faster and more efficient basic post request to backend */}
-      <h1>Faster and more efficient basic post request to backend</h1>
-
-      <input
+      <Input
         type="text"
         placeholder="Enter text"
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
           setInputText(e.target.value)
         }}
       />
-      <button type="submit" onClick={handleSubmit}>
+      <Button type="submit" onClick={handleSubmit}>
         Submit
-      </button>
+      </Button>
 
       <div>
         <h1>Response from backend</h1>
@@ -47,5 +47,3 @@ function App(): JSX.Element {
     </>
   )
 }
-
-export default App
