@@ -36,10 +36,14 @@ export async function UpsertData(data: EmbeddingResult[]): Promise<boolean> {
 export async function QueryData(data: number[]) {
   const QueryData = await index.namespace('example').query({
     vector: data,
-    topK: 3,
+    topK: 4,
     includeValues: true,
   })
-  return QueryData
+
+  console.log(QueryData);
+  
+
+  // return QueryData
 }
 
 /**

@@ -17,7 +17,8 @@ class Routes {
       const openai = new OpenAIService()
       const response = await openai.generateEmbedding(text)
 
-      const result = await QueryData(response)
+      const result = await QueryData(response)      
+      
 
       res.status(200).json({ Text: result })
     } catch (error: any) {
