@@ -7,6 +7,7 @@ const config = {
     './lib/**/*.{ts,tsx}',
     './common/**/*.{ts,tsx}',
     './utils/**/*.{ts,tsx}',
+    './schemas/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],

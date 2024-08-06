@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json(
-      { user: newUser, message: 'User created successfully' },
+      { user: newUser, message: 'User created successfully', success: true },
       { status: 201 },
     )
   } catch (error) {

@@ -1,11 +1,17 @@
-// src/middleware.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const isAuthenticated = false // Replace with your authentication logic
+  const path = request.nextUrl.pathname
 
-  if (!isAuthenticated) {
+  const isPublic = ['/signin', '/signup'].includes(path)
+  const token = request.cookies.get('token')?.value
+
+  if (isPublic && token) {
+    return NextResponse.redirect('/c')
+  }
+
+  if (!isPublic && !token) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
@@ -13,5 +19,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/c',
+  matcher: ['/signin', '/signup', '/c/:path*'],
 }
