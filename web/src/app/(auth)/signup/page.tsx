@@ -5,6 +5,7 @@ import { Button, Input } from '@/components/ui'
 import Link from 'next/link'
 import axios from 'axios'
 import Loader from '@/components/Loader'
+import { toast } from 'sonner'
 
 export default function Signup() {
   const [email, setEmail] = useState<string>('')
@@ -18,11 +19,20 @@ export default function Signup() {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.post('/api/signup', { email, password, confirmPassword })
+      const response = await axios.post('http://localhost:3000//api/signup', {
+        email,
+        password,
+        confirmPassword,
+      })
     } catch (error) {
-      setError('Error during Signing up. Please try again.')
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data || 'Error during signing up. Please try again.')
+      } else {
+        setError('An unexpected error occurred.')
+      }
     } finally {
       setLoading(false)
+      toast('Sign up successful!')
     }
   }
 

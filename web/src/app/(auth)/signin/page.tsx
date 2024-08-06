@@ -5,6 +5,7 @@ import { Button, Input } from '@/components/ui'
 import Link from 'next/link'
 import axios from 'axios'
 import Loader from '@/components/Loader'
+import { toast } from 'sonner'
 
 export default function Signin() {
   const [email, setEmail] = useState<string>('')
@@ -18,15 +19,20 @@ export default function Signin() {
     setError(null)
     try {
       const response = await axios.post('/api/signin', { email, password })
-      console.log(response)
     } catch (error) {
-      setError('Error during Signing in. Please try again.')
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data || 'Error during signing in. Please try again.')
+      } else {
+        setError('An unexpected error occurred.')
+      }
     } finally {
       setLoading(false)
+      toast('Sign in successful!')
     }
   }
 
   if (loading) return <Loader />
+
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
